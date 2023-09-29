@@ -4,19 +4,13 @@ using UnityEngine;
 
 namespace Unity.BossRoom.Gameplay.GameplayObjects
 {
-    /// <summary>
-    /// MonoBehaviour containing only one NetworkVariableInt which represents this object's health.
-    /// </summary>
     public class NetworkManaState : NetworkBehaviour
     {
 
         [HideInInspector]
         public NetworkVariable<int> ManaPoints = new NetworkVariable<int>();
 
-        // public subscribable event to be invoked when HP has been fully depleted
         public event Action ManaPointsDepleted;
-
-        // public subscribable event to be invoked when HP has been replenished
         public event Action ManaPointsReplenished;
 
         public event Action<string, bool> NotEnoughMana;
@@ -37,20 +31,21 @@ namespace Unity.BossRoom.Gameplay.GameplayObjects
         {
             if (previousValue > 0 && newValue <= 0)
             {
-                // newly reached 0 HP
                 ManaPointsDepleted?.Invoke();
             }
             else if (previousValue <= 0 && newValue > 0)
             {
-                // newly revived
                 ManaPointsReplenished?.Invoke();
             }
         }
 
-        public bool HasEnoughMana(int manaCost)
+        public bool CheckMana(int manaCost)
         {
             bool result = manaCost <= ManaPoints.Value;
+            
             if(!result) NotEnoughMana?.Invoke(m_AlertText, false);
+
+            Debug.Log("HasEnoughMana, result: "+result+" on object: "+gameObject.name);
 
             return result;
         }

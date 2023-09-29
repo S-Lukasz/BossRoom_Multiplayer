@@ -30,10 +30,12 @@ namespace Unity.BossRoom.Gameplay.Actions
             for (int i = m_PlayingActions.Count - 1; i >= 0; --i)
             {
                 var action = m_PlayingActions[i];
+
                 bool keepGoing = action.AnticipatedClient || action.OnUpdateClient(ClientCharacter); // only call OnUpdate() on actions that are past anticipation
                 bool expirable = action.Config.DurationSeconds > 0f; //non-positive value is a sentinel indicating the duration is indefinite.
                 bool timeExpired = expirable && action.TimeRunning >= action.Config.DurationSeconds;
                 bool timedOut = action.AnticipatedClient && action.TimeRunning >= k_AnticipationTimeoutSeconds;
+
                 if (!keepGoing || timeExpired || timedOut)
                 {
                     if (timedOut) { action.CancelClient(ClientCharacter); } //an anticipated action that timed out shouldn't get its End called. It is canceled instead.
@@ -106,8 +108,16 @@ namespace Unity.BossRoom.Gameplay.Actions
             if (!ClientCharacter.IsAnimating() && Action.ShouldClientAnticipate(ClientCharacter, ref data))
             {
                 var actionFX = ActionFactory.CreateActionFromData(ref data);
-                actionFX.AnticipateActionClient(ClientCharacter);
-                m_PlayingActions.Add(actionFX);
+                
+                int manaCost = actionFX.Config.ManaCost;
+                if(manaCost == 0 || ClientCharacter.serverCharacter.HasEnoughMana(actionFX.Config.ManaCost))
+                {
+                    actionFX.AnticipateActionClient(ClientCharacter);
+                    m_PlayingActions.Add(actionFX);
+
+                    if(manaCost != 0) 
+                        ClientCharacter.serverCharacter.NetManaState.ManaPoints.Value -= manaCost;
+                }
             }
         }
 
@@ -116,11 +126,25 @@ namespace Unity.BossRoom.Gameplay.Actions
             var anticipatedActionIndex = FindAction(data.ActionID, true);
 
             var actionFX = anticipatedActionIndex >= 0 ? m_PlayingActions[anticipatedActionIndex] : ActionFactory.CreateActionFromData(ref data);
+
+            
+            int manaCost = actionFX.Config.ManaCost;
+            bool hasEnoughMana = true;
+
+            if(manaCost != 0) 
+                hasEnoughMana = ClientCharacter.serverCharacter.HasEnoughMana(actionFX.Config.ManaCost);
+
+            if(!hasEnoughMana)
+                return;
+
             if (actionFX.OnStartClient(ClientCharacter))
             {
                 if (anticipatedActionIndex < 0)
                 {
                     m_PlayingActions.Add(actionFX);
+                    
+                    if(manaCost != 0) 
+                        ClientCharacter.serverCharacter.NetManaState.ManaPoints.Value -= manaCost;
                 }
                 //otherwise just let the action sit in it's existing slot
             }

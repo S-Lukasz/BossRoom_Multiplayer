@@ -59,6 +59,9 @@ namespace Unity.BossRoom.Gameplay.Actions
             }
 
             var newAction = ActionFactory.CreateActionFromData(ref action);
+            if(newAction.Config.ManaCost != 0 && !m_ServerCharacter.HasEnoughMana(newAction.Config.ManaCost))
+                return;
+
             m_Queue.Add(newAction);
             if (m_Queue.Count == 1) { StartAction(); }
         }
@@ -174,15 +177,6 @@ namespace Unity.BossRoom.Gameplay.Actions
            
             if (m_Queue.Count > 0)
             {
-                int manaCost = m_Queue[0].Config.ManaCost;
-                if(manaCost != 0)
-                {
-                    if(!m_ServerCharacter.NetManaState.HasEnoughMana(manaCost))
-                        return;
-                        
-                    m_ServerCharacter.NetManaState.ManaPoints.Value -= manaCost;
-                }
-
                 float reuseTime = m_Queue[0].Config.ReuseTimeSeconds;
                 if (reuseTime > 0
                     && m_LastUsedTimestamps.TryGetValue(m_Queue[0].ActionID, out float lastTimeUsed)
@@ -195,6 +189,10 @@ namespace Unity.BossRoom.Gameplay.Actions
 
                 int index = SynthesizeTargetIfNecessary(0);
                 SynthesizeChaseIfNecessary(index);
+
+                int manaCost = m_Queue[0].Config.ManaCost;
+                if(manaCost != 0 && m_ServerCharacter.NetManaState) 
+                    m_ServerCharacter.NetManaState.ManaPoints.Value -= m_Queue[0].Config.ManaCost;
 
                 m_Queue[0].TimeStarted = Time.time;
                 bool play = m_Queue[0].OnStart(m_ServerCharacter);

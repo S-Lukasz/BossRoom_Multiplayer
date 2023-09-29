@@ -420,6 +420,14 @@ namespace Unity.BossRoom.Gameplay.GameplayObjects.Character
             }
         }
 
+        public bool HasEnoughMana(int manaCost)
+        {
+            if(NetManaState == null)
+                return true;
+                
+            return NetManaState.CheckMana(manaCost);
+        }
+
         /// <summary>
         /// This character's AIBrain. Will be null if this is not an NPC.
         /// </summary>

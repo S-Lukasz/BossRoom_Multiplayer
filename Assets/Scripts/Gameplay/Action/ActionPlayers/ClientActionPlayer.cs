@@ -110,13 +110,13 @@ namespace Unity.BossRoom.Gameplay.Actions
                 var actionFX = ActionFactory.CreateActionFromData(ref data);
                 
                 int manaCost = actionFX.Config.ManaCost;
-                if(manaCost == 0 || ClientCharacter.serverCharacter.HasEnoughMana(actionFX.Config.ManaCost))
+                if(manaCost == 0 || ClientCharacter.serverCharacter.HasEnoughMana(manaCost))
                 {
                     actionFX.AnticipateActionClient(ClientCharacter);
                     m_PlayingActions.Add(actionFX);
 
                     if(manaCost != 0) 
-                        ClientCharacter.serverCharacter.NetManaState.ManaPoints.Value -= manaCost;
+                        ClientCharacter.serverCharacter.ReceiveMana(ClientCharacter.serverCharacter, -manaCost);
                 }
             }
         }
@@ -124,9 +124,7 @@ namespace Unity.BossRoom.Gameplay.Actions
         public void PlayAction(ref ActionRequestData data)
         {
             var anticipatedActionIndex = FindAction(data.ActionID, true);
-
             var actionFX = anticipatedActionIndex >= 0 ? m_PlayingActions[anticipatedActionIndex] : ActionFactory.CreateActionFromData(ref data);
-
             
             int manaCost = actionFX.Config.ManaCost;
             bool hasEnoughMana = true;
@@ -144,7 +142,7 @@ namespace Unity.BossRoom.Gameplay.Actions
                     m_PlayingActions.Add(actionFX);
                     
                     if(manaCost != 0) 
-                        ClientCharacter.serverCharacter.NetManaState.ManaPoints.Value -= manaCost;
+                        ClientCharacter.serverCharacter.ReceiveMana(ClientCharacter.serverCharacter, -manaCost);
                 }
                 //otherwise just let the action sit in it's existing slot
             }

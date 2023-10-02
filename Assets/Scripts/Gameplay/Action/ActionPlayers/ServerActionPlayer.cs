@@ -191,8 +191,7 @@ namespace Unity.BossRoom.Gameplay.Actions
                 SynthesizeChaseIfNecessary(index);
 
                 int manaCost = m_Queue[0].Config.ManaCost;
-                if(manaCost != 0 && m_ServerCharacter.NetManaState) 
-                    m_ServerCharacter.NetManaState.ManaPoints.Value -= m_Queue[0].Config.ManaCost;
+                if(manaCost != 0) m_ServerCharacter.ReceiveMana(m_ServerCharacter, -manaCost);
 
                 m_Queue[0].TimeStarted = Time.time;
                 bool play = m_Queue[0].OnStart(m_ServerCharacter);

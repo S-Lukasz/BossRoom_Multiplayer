@@ -373,8 +373,18 @@ namespace Unity.BossRoom.Gameplay.GameplayObjects.Character
             }
         }
 
-        void ReceiveMana(ServerCharacter inflicter, int mana)
+        public void ReceiveMana(ServerCharacter inflicter, int mana)
         {
+            if(mana > 0)
+            {
+                //Regenerate mana
+                
+            }
+            else
+            {
+                //Use mana
+            }
+
             ManaPoints = Mathf.Clamp(ManaPoints + mana, 0, CharacterClass.BaseMana);
         }
 
